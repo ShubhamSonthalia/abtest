@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Headline A/B Test</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
+      font-family: 'Montserrat', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: rgba(255,255,255,0.95);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(33,147,176,0.2);
+      padding: 40px 32px 32px 32px;
+      max-width: 400px;
+      text-align: center;
+      margin-top: 40px;
+    }
+    #headline {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #2193b0;
+      margin-bottom: 28px;
+      margin-top: 0;
+      letter-spacing: 1px;
+    }
+    .signup-btn {
+      background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 36px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(33,147,176,0.15);
+      transition: background 0.2s, transform 0.2s;
+      margin-top: 10px;
+    }
+    .signup-btn:hover {
+      background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .ab-label {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+  <script>
+    // Helper to generate a visitor ID
+    function generateVisitorID() {
+      return 'v-' + Math.random().toString(36).substring(2, 12);
+    }
+
+    // Save visitor ID in local storage (so same user keeps same ID)
+    function getVisitorID() {
+      let id = localStorage.getItem("visitor_id");
+      if (!id) {
+        id = generateVisitorID();
+        localStorage.setItem("visitor_id", id);
+      }
+      return id;
+    }
+
+    // Assign variant A or B randomly (50/50 chance)
+    function assignVariant() {
+      return Math.random() < 0.5 ? "A" : "B";
+    }
+
+    let visitorID = getVisitorID();
+    let variant = assignVariant();
+
+    // Send event to backend
+    async function logEvent(type) {
+      await fetch("/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          visitor_id: visitorID,
+          variant: variant,
+          event_type: type,
+          timestamp: new Date().toISOString()
+        })
+      })
+      .then(res => res.json())
+      .then(data => console.log("✅ Event logged:", data))
+      .catch(err => console.error("❌ Fetch failed:", err));
+    }
+
+    // Log page load
+    window.onload = () => {
+      logEvent("view");
+      let headline = document.getElementById("headline");
+      let abLabel = document.getElementById("ab-label");
+      if (variant === "A") {
+        headline.textContent = "Join Now for Free";  // Version A
+        abLabel.textContent = "You are seeing Headline Variant A";
+      } else {
+        headline.textContent = "Start Your Free Trial";  // Version B
+        abLabel.textContent = "You are seeing Headline Variant B";
+      }
+    };
+
+    // Log conversion when button is clicked
+    function handleSignup() {
+      logEvent("conversion");
+      alert("Thanks for signing up!");
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="ab-label" id="ab-label"></div>
+    <h1 id="headline"></h1>
+    <button class="signup-btn" onclick="handleSignup()">Sign Up</button>
+  </div>
