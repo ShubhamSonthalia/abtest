@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import csv
 import os
@@ -38,6 +38,14 @@ def log_event():
             data["timestamp"]
         ])
     return jsonify({"status": "success"}), 200
+
+@app.route("/download")
+def download_events():
+    """Provides the events.csv file for download."""
+    try:
+        return send_file(DATA_FILE, as_attachment=True)
+    except FileNotFoundError:
+        return "Error: events.csv not found.", 404
 
 # This part is needed to run the app locally for testing
 if __name__ == "__main__":
